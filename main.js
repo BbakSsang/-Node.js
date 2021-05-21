@@ -14,6 +14,8 @@ function templateHTML(title, list, body) {
     <ul>
    ${list}
     </ul>
+    <a href="/create">create</a>
+    
    ${body}
   </body>
   </html>
@@ -34,12 +36,13 @@ function templateLIST(filelist) {
 var app = http.createServer(function (request, response) {
   var _url = request.url;
   var queryData = url.parse(_url, true).query;
-
   var pathname = url.parse(_url, true).pathname;
+
 
   if (pathname === '/') {
     if (queryData.id === undefined) {
 
+      console.log(url.parse(_url),true.pathname);
 
       fs.readdir(`./data`, function (error, filelist) {
         console.log('reload')
@@ -53,7 +56,6 @@ var app = http.createServer(function (request, response) {
         response.writeHead(200);
         response.end(template);
       })
-
     }
 
 
@@ -76,6 +78,52 @@ var app = http.createServer(function (request, response) {
     }
 
   }
+  else if(pathname==='/create'){
+    fs.readdir(`./data`, function (error, filelist) {
+      console.log('reload')
+     // var description = 'hello, node.js'
+      var title = 'WEB - create';
+      /* var list =` <li><a href="/?id=HTML">HTML</a></li>
+       <li><a href="/?id=CSS">CSS</a></li>
+       <li><a href="/?id=JAVASCRIPT">JavaScript</a></li>`*/
+      var list = templateLIST(filelist);
+      var template = templateHTML(title, list, 
+        `<form action="http://localhost:3000/create_process" method="post">
+        <p><input type="text" name="title" placeholder="title"></p>
+        <p>
+            <textarea name="description"  placeholder="description"></textarea>
+        </p>
+        <p>
+            <input type="submit">
+        </p>
+        </form>`);
+      response.writeHead(200);
+      response.end(template);
+    });
+  }
+  else if(pathname==='/create_process'){
+    var body = '';
+
+    request.on('data', function (data) {
+        body += data;
+
+        // Too much POST data, kill the connection!
+        // 1e6 === 1 * Math.pow(10, 6) === 1 * 1000000 ~~~ 1MB
+        if (body.length > 1e6)
+            request.connection.destroy();
+    });
+
+    request.on('end', function () {
+        var post = qs.parse(body);
+        // use post['blah'], etc.
+    });
+
+
+    response.writeHead(200);
+    response.end('sucess');
+  }
+
+
   else {
     response.writeHead(404);
     response.end('Not Foundd');
